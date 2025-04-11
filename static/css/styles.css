@@ -23,3 +23,23 @@ input, button {
     padding: 10px;
     font-size: 16px;
 }
+body {
+    background: linear-gradient(135deg, #6a11cb, #2575fc);
+    font-family: 'Arial', sans-serif;
+    padding: 20px;
+    min-height: 100vh;
+}
+.viewer-container {
+    background: rgba(255, 255, 255, 0.9);
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    max-width: 1000px;
+    margin: 0 auto;
+}
+#streamView {
+    width: 100%;
+    border-radius: 10px;
+    margin: 20px 0;
+    background: #000;
+}

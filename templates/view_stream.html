@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Viewing Live Stream</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: #f8f9fa;
+            padding: 20px;
+        }
+        .viewer-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        #streamView {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin: 20px 0;
+            background: #000;
+        }
+        .viewer-count {
+            font-size: 1.1rem;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="viewer-container">
+        <h2 class="text-center mb-4">Live Screen Sharing</h2>
+        
+        <div class="d-flex justify-content-between mb-4">
+            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Dashboard</a>
+            <div class="viewer-count">Viewers: {{ stream_status['viewers'] }}/5</div>
+        </div>
+
+        <!-- ✅ Live stream embedded from Flask backend -->
+        <img id="streamView" src="{{ url_for('video_feed') }}" alt="Live Stream">
+
+        <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+        <script>
+            const socket = io();
+
+            socket.on('stream_ended', () => {
+                alert('Host has ended the stream');
+                window.location.href = "/dashboard";
+            });
+
+            socket.on('viewer_count', (count) => {
+                document.querySelector('.viewer-count').textContent = `Viewers: ${count}/5`;
+            });
+
+            window.addEventListener('beforeunload', () => {
+                fetch('/leave_stream');
+            });
+        </script>
+    </div>
+</body>
+</html>

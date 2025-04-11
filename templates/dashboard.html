@@ -4,38 +4,38 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Custom CSS -->
     <style>
         body {
             background: linear-gradient(135deg, #6a11cb, #2575fc);
             font-family: 'Arial', sans-serif;
+            min-height: 100vh;
+            padding: 20px;
         }
         .dashboard-container {
             background: rgba(255, 255, 255, 0.9);
             padding: 30px;
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            width: 100%;
             max-width: 800px;
-            margin: 50px auto;
-            animation: slideIn 1s ease-in-out;
+            margin: 0 auto;
+            animation: fadeIn 0.5s ease-in-out;
         }
-        @keyframes slideIn {
+        @keyframes fadeIn {
             from { opacity: 0; transform: translateY(-20px); }
             to { opacity: 1; transform: translateY(0); }
         }
         h2 {
             color: #333;
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
         }
         .btn {
             margin: 10px;
-            padding: 10px 20px;
+            padding: 12px 24px;
             border-radius: 10px;
-            transition: background 0.3s ease;
+            transition: all 0.3s ease;
+            font-weight: 500;
         }
         .btn-primary {
             background: #2575fc;
@@ -43,24 +43,110 @@
         }
         .btn-primary:hover {
             background: #6a11cb;
+            transform: translateY(-2px);
+        }
+        .btn-success {
+            background: #28a745;
         }
         .btn-danger {
-            background: #ff4d4d;
-            border: none;
+            background: #dc3545;
         }
-        .btn-danger:hover {
-            background: #cc0000;
+        .role-badge {
+            font-size: 0.8rem;
+            padding: 5px 10px;
+            border-radius: 20px;
+            margin-left: 10px;
+        }
+        .admin-badge {
+            background: #dc3545;
+            color: white;
+        }
+        .viewer-badge {
+            background: #2575fc;
+            color: white;
+        }
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            transition: transform 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .card-header {
+            background: rgba(0,0,0,0.03);
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
     <div class="dashboard-container">
-        <h2>Welcome, {{ username }}!</h2>
-        <div class="text-center">
-            <a href="{{ url_for('recorded_videos') }}" class="btn btn-primary">Recorded Videos</a>
-            <a href="{{ url_for('live_stream') }}" class="btn btn-primary">Live Stream</a>
+        <h2>
+            Welcome, {{ username }}!
+            <span class="role-badge {% if role == 'admin' %}admin-badge{% else %}viewer-badge{% endif %}">
+                {{ role|upper }}
+            </span>
+        </h2>
+        
+        <div class="row">
+            <!-- Common Options for All Users -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">Recorded Content</div>
+                    <div class="card-body">
+                        <a href="{{ url_for('recorded_videos') }}" class="btn btn-primary w-100">View Recorded Videos</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Only Options -->
+            {% if role == 'admin' %}
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">Stream Management</div>
+                    <div class="card-body">
+                        <a href="{{ url_for('live_stream') }}" class="btn btn-success w-100">Start Live Stream</a>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <!-- Viewer Only Options -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">Live Content</div>
+                    <div class="card-body">
+                        <a href="{{ url_for('view_stream') }}" class="btn btn-primary w-100">Join Live Stream</a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Admin Only Section -->
+        {% if role == 'admin' %}
+        <div class="card mt-4">
+            <div class="card-header">Admin Tools</div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-secondary">Manage Users</button>
+                    <button class="btn btn-secondary">Stream Analytics</button>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="text-center mt-4">
             <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
         </div>
+
+        {% if role == 'admin' and stream_status.live %}
+        <div class="alert alert-success mt-4" role="alert">
+            <strong>Stream is LIVE!</strong> Share this link with viewers:
+            <input type="text" class="form-control mt-2" value="{{ url_for('view_stream', _external=True) }}" readonly>
+        </div>
+        {% endif %}
     </div>
 </body>
 </html>
