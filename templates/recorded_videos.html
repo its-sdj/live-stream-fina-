@@ -23,19 +23,59 @@
             border-radius: 8px;
             margin-bottom: 20px;
         }
+        .video-info {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-bottom: 10px;
+        }
+        .upload-form {
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
     <div class="videos-container">
         <h2 class="text-center mb-4">Recorded Videos</h2>
         
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ 'success' if 'success' in message else 'danger' }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% if is_admin %}
+        <div class="upload-form">
+            <h4>Upload New Video</h4>
+            <form method="POST" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <input type="file" name="video" class="form-control" accept="video/*" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Upload Video</button>
+            </form>
+        </div>
+        {% endif %}
+
         {% if videos %}
             {% for video in videos %}
-            <div class="video-wrapper">
+            <div class="video-wrapper mb-3">
+                <div class="video-info">
+                    Filename: {{ video.filename }}<br>
+                    Uploaded by: {{ video.uploaded_by }}<br>
+                    Upload Time: {{ video.upload_time }}
+                </div>
                 <video controls>
-                    <source src="{{ url_for('static', filename='videos/' + video) }}" type="video/mp4">
+                    <source src="{{ url_for('get_video', video_id=video.id) }}" type="video/mp4">
                     Your browser doesn't support HTML5 video.
                 </video>
+                {% if is_admin %}
+                <form action="{{ url_for('delete_video', video_id=video.id) }}" method="POST" style="display:inline;">
+                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                </form>
+                {% endif %}
             </div>
             {% endfor %}
         {% else %}
@@ -46,5 +86,6 @@
             <a href="{{ url_for('dashboard') }}" class="btn btn-primary">Back to Dashboard</a>
         </div>
     </div>
+    <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'92eb26836f7e60c7',t:'MTc0NDM4MTQ5Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
 </body>
 </html>

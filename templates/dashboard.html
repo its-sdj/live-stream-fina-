@@ -124,19 +124,6 @@
             {% endif %}
         </div>
 
-        <!-- Admin Only Section -->
-        {% if role == 'admin' %}
-        <div class="card mt-4">
-            <div class="card-header">Admin Tools</div>
-            <div class="card-body">
-                <div class="d-grid gap-2">
-                    <button class="btn btn-secondary">Manage Users</button>
-                    <button class="btn btn-secondary">Stream Analytics</button>
-                </div>
-            </div>
-        </div>
-        {% endif %}
-
         <div class="text-center mt-4">
             <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
         </div>
