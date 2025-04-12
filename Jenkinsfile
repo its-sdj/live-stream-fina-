@@ -2,59 +2,74 @@ pipeline {
     agent any
 
     environment {
-        VENV_DIR = 'venv'
-        FLASK_APP = 'app.py'
+        // Use python3 by default
+        PATH = "${env.PATH}:/usr/local/bin"
     }
 
     stages {
-        // Stage to clone the repository
-        stage('Clone Repository') {
+        stage('Checkout SCM') {
             steps {
-                git branch: 'main', url: 'https://github.com/its-sdj/live-stream-fina-.git'
+                checkout scm
             }
         }
 
-        // Stage to set up Python environment
         stage('Setup Python Environment') {
             steps {
-                // Set up Python virtual environment
-                sh 'python3 -m venv ${VENV_DIR}'
-                
-                // Upgrade pip
-                sh '. ${VENV_DIR}/bin/activate && pip install --upgrade pip'
-                
-                // Install the dependencies from requirements.txt
-                sh '. ${VENV_DIR}/bin/activate && pip install -r requirements.txt'
+                script {
+                    // Verify Python is installed
+                    def pythonVersion = sh(script: 'python3 --version || echo "Python3 not found"', returnStdout: true).trim()
+                    if (pythonVersion.contains("not found")) {
+                        error("Python 3 is not installed. Please install Python 3 on the Jenkins agent.")
+                    }
+                    echo "Using ${pythonVersion}"
+
+                    // Create virtual environment
+                    sh 'python3 -m venv venv'
+                }
             }
         }
 
-        // Stage to run the Flask application
-        stage('Run Application') {
+        stage('Install Dependencies') {
             steps {
                 script {
-                    echo 'Running the Flask app...'
+                    // Activate venv and install dependencies
                     sh '''
-                    if [ -f ${VENV_DIR}/bin/activate ]; then
-                        . ${VENV_DIR}/bin/activate
-                    else
-                        . ${VENV_DIR}/Scripts/activate
-                    fi
-                    python ${FLASK_APP} &
+                        . venv/bin/activate
+                        pip install --upgrade pip
+                        if [ -f requirements.txt ]; then
+                            pip install -r requirements.txt
+                        fi
                     '''
                 }
             }
         }
 
-        // Additional stages like testing, setup ngrok, etc. can go here
+        stage('Run Application') {
+            steps {
+                script {
+                    // Run your Python application
+                    sh '''
+                        . venv/bin/activate
+                        python app.py &
+                    '''
+                }
+            }
+        }
     }
 
     post {
         always {
             echo 'Cleaning up...'
             sh '''
-            pkill -f ${FLASK_APP} || true
-            rm -rf ${VENV_DIR}
+                pkill -f app.py || true
+                rm -rf venv || true
             '''
+        }
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed!'
         }
     }
 }
