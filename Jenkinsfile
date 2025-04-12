@@ -9,7 +9,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', credentialsId: env.GITHUB_CREDENTIALS, url: 'https://github.com/your-username/live-stream.git'
+                git branch: 'main', credentialsId: env.GITHUB_CREDENTIALS, url: 'https://github.com/its-sdj/live-stream-fina-.git'
             }
         }
         
