@@ -10,7 +10,7 @@ pipeline {
         stage('Clone') {
             steps {
                 // Checkout code from the Git repository
-                git url: 'https://github.com/its-sdj/live-stream-fina-.git', branch: 'main'
+                git url: 'https://github.com/its-sdj/live-stream-fina-.git',
             }
         }
 
