@@ -1,55 +1,38 @@
 pipeline {
-    agent {
-        docker { image 'my-jenkins:with-python' }
-    }
+    agent any
+
     environment {
-        PATH = "${env.PATH}:/usr/local/bin"
-        VENV_DIR = 'venv'
-        FLASK_APP = 'app.py'
+        FLASK_APP = "app.py"
+        VENV_DIR = ".venv"
     }
+
     stages {
-        stage('Checkout SCM') {
+        stage('Clone') {
             steps {
-                checkout scm
+                git 'https://github.com/its-sdj/live-stream-fina-.git'
             }
         }
-        stage('Setup Python Environment') {
+
+        stage('Build Docker') {
             steps {
-                sh 'python3 --version'
-                sh 'python3 -m venv ${VENV_DIR}'
-                sh 'ls -la ${VENV_DIR}/bin/'  // Debug step
+                sh 'docker pull python:3.9-slim'
+                sh 'docker build -t livestream-app .'
             }
         }
-        stage('Install Dependencies') {
+
+        stage('Run App') {
             steps {
-                sh '''
-                . ${VENV_DIR}/bin/activate
-                pip install --upgrade pip
-                if [ -f requirements.txt ]; then
-                    pip install -r requirements.txt
-                fi
-                '''
-            }
-        }
-        stage('Run Application') {
-            steps {
-                sh '. ${VENV_DIR}/bin/activate && python ${FLASK_APP} &'
+                sh 'docker run -d -p 5000:5000 livestream-app'
             }
         }
     }
+
     post {
         always {
-            script {
-                sh 'pkill -f ${FLASK_APP} || true'
-                sh 'rm -rf ${VENV_DIR} || true'
-            }
-        }
-        success {
-            echo 'Pipeline completed successfully!'
+            echo "Cleaning up..."
         }
         failure {
-            echo 'Pipeline failed! Debug information:'
+            echo "Build failed. Debug info:"
         }
     }
 }
-
