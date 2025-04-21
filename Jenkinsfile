@@ -2,54 +2,42 @@ pipeline {
     agent any
 
     environment {
-        VENV_PATH = "venv"
+        FLASK_APP = "app.py"
+        VENV_DIR = ".venv"
     }
 
     stages {
-        stage('Checkout SCM') {
+        stage('Clone') {
             steps {
-                git url: 'https://github.com/its-sdj/live-stream-fina-.git', branch: 'main'
+                // Checkout code from the Git repository using the scm object automatically configured by Jenkins
+                checkout scm
             }
         }
 
-        stage('Setup Python Environment') {
+        stage('Build Docker') {
             steps {
-                sh '''
-                    which python3 || echo "Python3 is not installed!"
-                    python3 --version
-                    python3 -m venv ${VENV_PATH}
-                '''
+                // Pull the Python Docker image and build the Docker image
+                sh 'docker pull python:3.9-slim'
+                sh 'docker build -t livestream-app .'
             }
         }
 
-        stage('Install Dependencies') {
+        stage('Run App') {
             steps {
-                sh '''
-                    . ${VENV_PATH}/bin/activate
-                    pip install --upgrade pip
-                    if [ -f requirements.txt ]; then
-                        pip install -r requirements.txt
-                    fi
-                '''
-            }
-        }
-
-        stage('Run Application') {
-            steps {
-                sh '''
-                    . ${VENV_PATH}/bin/activate
-                    python app.py &
-                '''
+                // Run the Docker container in detached mode on port 5000
+                sh 'docker run -d -p 5000:5000 livestream-app'
             }
         }
     }
 
     post {
         always {
-            echo 'Cleaning up...'
-            sh '''
-                pkill -f app.py || true
-                rm -rf ${VENV_PATH}
-            '''
+            // Clean up after the build
+            echo "Cleaning up..."
+        }
+        failure {
+            // Output debug information if the build fails
+            echo "Build failed. Debug info:"
         }
     }
+}
