@@ -7,11 +7,12 @@ pipeline {
     }
 
     stages {
-        stage('Clone') {
-            steps {
-                // Checkout code from the Git repository using the scm object automatically configured by Jenkins
-                git url: 'https://github.com/its-sdj/live-stream-fina-.git
-        }
+       stage('Clone') {
+    steps {
+        git url: 'https://github.com/its-sdj/live-stream-final.git'
+    }
+}
+
 
         stage('Build Docker') {
             steps {
