@@ -1,11 +1,15 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'python:3.9-slim'
+            args '-u root -v /tmp:/tmp'
+        }
+    }
 
     environment {
-        // Use python3 by default and set path for Jenkins agent
-        PATH = "${env.PATH}:/usr/local/bin"
-        VENV_DIR = 'venv'
-        FLASK_APP = 'app.py'
+        VENV_DIR = "${WORKSPACE}/venv"
+        FLASK_APP = "app.py"
+        PIP_CACHE_DIR = "${WORKSPACE}/.pip-cache"
     }
 
     stages {
@@ -15,18 +19,30 @@ pipeline {
             }
         }
 
-        stage('Setup Python Environment') {
+        stage('Verify Python Setup') {
             steps {
                 script {
-                    // Verify Python is installed
-                    def pythonVersion = sh(script: 'python3 --version || echo "Python3 not found"', returnStdout: true).trim()
-                    if (pythonVersion.contains("not found")) {
-                        error("Python 3 is not installed. Please install Python 3 on the Jenkins agent.")
-                    }
-                    echo "Using ${pythonVersion}"
+                    sh '''
+                        echo "Python version:"
+                        python --version
+                        echo "Pip version:"
+                        pip --version
+                        python -c "import venv; print('venv module available')"
+                    '''
+                }
+            }
+        }
 
-                    // Create virtual environment
-                    sh 'python3 -m venv ${VENV_DIR}'
+        stage('Create Virtual Environment') {
+            steps {
+                script {
+                    sh """
+                        echo "Creating virtual environment..."
+                        python -m venv ${VENV_DIR}
+                        echo "Verifying virtual environment..."
+                        [ -f ${VENV_DIR}/bin/activate ] || exit 1
+                        echo "Virtual environment created successfully at ${VENV_DIR}"
+                    """
                 }
             }
         }
@@ -34,14 +50,20 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 script {
-                    // Activate venv and install dependencies
-                    sh '''
+                    sh """
+                        echo "Activating virtual environment..."
                         . ${VENV_DIR}/bin/activate
+                        echo "Upgrading pip..."
                         pip install --upgrade pip
+                        echo "Installing dependencies..."
                         if [ -f requirements.txt ]; then
                             pip install -r requirements.txt
+                        else
+                            echo "Warning: requirements.txt not found"
                         fi
-                    '''
+                        echo "Installed packages:"
+                        pip list
+                    """
                 }
             }
         }
@@ -49,11 +71,17 @@ pipeline {
         stage('Run Application') {
             steps {
                 script {
-                    echo 'Running the Flask app...'
-                    sh '''
+                    sh """
                         . ${VENV_DIR}/bin/activate
-                        python ${FLASK_APP} &
-                    '''
+                        echo "Starting Flask application..."
+                        nohup python ${FLASK_APP} > flask.log 2>&1 &
+                        sleep 5
+                        echo "Checking if app is running..."
+                        pgrep -f ${FLASK_APP} || { echo "Application failed to start"; exit 1; }
+                        echo "Application started successfully"
+                        echo "Server logs:"
+                        cat flask.log
+                    """
                 }
             }
         }
@@ -62,16 +90,23 @@ pipeline {
     post {
         always {
             echo 'Cleaning up...'
-            sh '''
+            sh """
                 pkill -f ${FLASK_APP} || true
                 rm -rf ${VENV_DIR} || true
-            '''
-        }
-        success {
-            echo 'Pipeline completed successfully!'
+                rm -f flask.log || true
+            """
         }
         failure {
-            echo 'Pipeline failed!'
+            echo 'Pipeline failed! Debug information:'
+            sh """
+                echo "Workspace contents:"
+                ls -la
+                echo "Python environment info:"
+                which python
+                python --version
+                echo "Virtual environment check:"
+                ls -la ${VENV_DIR}/bin/ || true
+            """
         }
     }
 }
