@@ -1,43 +1,38 @@
 pipeline {
     agent any
-
-    environment {
-        FLASK_APP = "app.py"
-        VENV_DIR = ".venv"
+    
+    options {
+        skipDefaultCheckout(true) // Crucial to prevent premature SCM setup
     }
 
     stages {
-       stage('Clone') {
-    steps {
-        git url: 'https://github.com/its-sdj/live-stream-fina-.git'
-    }
-}
-
-
-        stage('Build Docker') {
+        stage('Clean Workspace') {
             steps {
-                // Pull the Python Docker image and build the Docker image
-                sh 'docker pull python:3.9-slim'
-                sh 'docker build -t livestream-app .'
+                cleanWs() // Requires Workspace Cleanup plugin
             }
         }
-
-        stage('Run App') {
+        
+        stage('Checkout Code') {
             steps {
-                // Run the Docker container in detached mode on port 5000
-                sh 'docker run -d -p 5000:5000 livestream-app'
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '*/main']],
+                    extensions: [
+                        [$class: 'CleanBeforeCheckout'],
+                        [$class: 'CloneOption', depth: 0, noTags: false, shallow: false]
+                    ],
+                    userRemoteConfigs: [[
+                        url: 'https://github.com/its-sdj/live-stream-fina-.git'
+                    ]]
+                ])
             }
         }
-    }
-
-    post {
-        always {
-            // Clean up after the build
-            echo "Cleaning up..."
-        }
-        failure {
-            // Output debug information if the build fails
-            echo "Build failed. Debug info:"
+        
+        stage('Build') {
+            steps {
+                sh 'ls -la' // Verify files were cloned
+                // Your build steps here
+            }
         }
     }
 }
