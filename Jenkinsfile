@@ -6,12 +6,11 @@ pipeline {
         VENV_DIR = ".venv"
     }
 
-    stages {
-        stage('Clone') {
-            steps {
-                git 'https://github.com/its-sdj/live-stream-fina-.git'
-            }
-        }
+   stage('Clone') {
+    steps {
+        git branch: 'main', url: 'https://github.com/its-sdj/live-stream-fina-.git'
+    }
+}
 
         stage('Build Docker') {
             steps {
