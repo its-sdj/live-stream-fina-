@@ -19,6 +19,13 @@
             box-shadow: 0 0 20px rgba(0,0,0,0.1);
             text-align: center;
         }
+        .status-indicator {
+            font-size: 1.2em;
+            padding: 5px 15px;
+            border-radius: 5px;
+        }
+        .live { background-color: #28a745; color: white; }
+        .offline { background-color: #dc3545; color: white; }
     </style>
 </head>
 <body>
@@ -34,7 +41,8 @@
             {% endif %}
         {% endwith %}
 
-        <p>Stream Status: {% if stream_status.live %}Live{% else %}Offline{% endif %}</p>
+        <p>Stream Status: <span class="status-indicator {{ 'live' if stream_status.live else 'offline' }}">
+            {{ 'Live' if stream_status.live else 'Offline' }}</span></p>
         <p>Viewers: {{ stream_status.viewers }} / {{ MAX_VIEWERS }}</p>
 
         {% if stream_status.live %}
@@ -42,7 +50,6 @@
                 <button type="submit" class="btn btn-danger">Stop Stream</button>
             </form>
         {% else %}
-            <p>The stream is currently offline.</p>
             <a href="{{ url_for('start_stream') }}" class="btn btn-success">Start Stream</a>
         {% endif %}
 

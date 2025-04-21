@@ -27,6 +27,12 @@
             font-size: 1.1rem;
             color: #6c757d;
         }
+        .stream-not-started {
+            text-align: center;
+            color: #dc3545;
+            font-size: 1.2rem;
+            margin: 20px 0;
+        }
     </style>
 </head>
 <body>
@@ -38,8 +44,12 @@
             <div class="viewer-count">Viewers: {{ stream_status['viewers'] }}/5</div>
         </div>
 
-        <!-- ✅ Live stream embedded from Flask backend -->
-        <img id="streamView" src="{{ url_for('video_feed') }}" alt="Live Stream">
+        {% if not stream_status['live'] %}
+            <div class="stream-not-started">Stream is not started</div>
+        {% else %}
+            <!-- ✅ Live stream embedded from Flask backend -->
+            <img id="streamView" src="{{ url_for('video_feed') }}" alt="Live Stream">
+        {% endif %}
 
         <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
         <script>

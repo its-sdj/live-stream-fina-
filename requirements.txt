@@ -1,7 +1,8 @@
 flask
-flask_socketio
-eventlet
 pymongo
+flask-socketio
+eventlet
 opencv-python
 numpy
 mss
+werkzeug

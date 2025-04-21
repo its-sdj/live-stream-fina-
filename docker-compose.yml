@@ -1,12 +1,35 @@
-version: '3.8'
+version: "3"
+
 services:
-  app:
+  webapp:
     build: .
     ports:
       - "5000:5000"
+    volumes:
+      - .:/app
+    environment:
+      - FLASK_APP=app.py
+      - FLASK_ENV=development
+      - MONGO_URI=mongodb://mongo:27017/yourdb
     depends_on:
-      - mongo
+      mongo:
+        condition: service_healthy
+    restart: unless-stopped
+
   mongo:
     image: mongo:latest
     ports:
       - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    environment:
+       - MONGO_URI=mongodb://mongo:27017/livestream_db
+       - MONGO_INITDB_DATABASE=livestream_db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 30s
+      retries: 3
+
+volumes:
+  mongo_data:

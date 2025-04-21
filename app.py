@@ -18,7 +18,8 @@ socketio = SocketIO(app)
 
 # ─── MONGODB SETUP ──────────────────────────────────────────────────────────
 try:
-    client = MongoClient('mongodb://localhost:27017/', serverSelectionTimeoutMS=5000)
+    mongo_uri = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
+    client = MongoClient(mongo_uri, serverSelectionTimeoutMS=5000)
     client.server_info()  # Check MongoDB connection
     db = client['livestream_db']
     users = db['users']
@@ -169,7 +170,7 @@ def start_stream():
     stream_status['live'] = True
     return redirect(url_for('live_stream'))
 
-@app.route('/stop_stream')
+@app.route('/stop_stream', methods=['POST'])
 @login_required(role='admin')
 def stop_stream():
     stream_status['live'] = False
@@ -237,4 +238,4 @@ def handle_disconnect():
 
 # ─── RUN SERVER ─────────────────────────────────────────────────────────────
 if __name__ == '__main__':
-    socketio.run(app, host="0.0.0.0", port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000)  # Crucial for Docker
